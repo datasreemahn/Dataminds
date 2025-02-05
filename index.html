@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Invoice Search</title>
+    <script src="https://mozilla.github.io/pdf.js/build/pdf.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Patient Invoice Search</h1>
+        <input type="text" id="search-input" placeholder="Enter search term...">
+        <button onclick="searchPDF()">Search</button>
+        <div id="pdf-container"></div>
+    </div>
+    <script>
+        let pdfDocs = []; /*store for pdf files*/
+
+        /*to ensure search term isn't empty */
+        async function searchPDF() {
+            const searchTerm = document.getElementById('search-input').value;
+            if (!searchTerm) {
+                alert("Please enter a search term.");
+                return;
+            }
+            document.getElementById('pdf-container').innerHTML = '';
+
+            /* dummy code to search pdf */
+            for (const file of pdfDocs) {
+                const fileURL = URL.createObjectURL(file);
+                const pdf = await pdfjsLib.getDocument(fileURL).promise;
+                for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                    const page = await pdf.getPage(pageNum);
+                    const textContent = await page.getTextContent();
+                    const text = textContent.items.map(item => item.str).join(' ');
+                    if (text.includes(searchTerm)) {
+                        renderPage(page, file.name, pageNum);
+                    }
+                }
+            }
+        }
+        
+        /*to display pdf title and content of page */
+        async function renderPage(page, fileName, pageNum) {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            const viewport = page.getViewport({ scale: 1.5 });
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            
+            await page.render({ canvasContext: context, viewport: viewport }).promise;
+            
+            const container = document.getElementById('pdf-container');
+            const title = document.createElement('p');
+            title.classList.add('pdf-title');
+            title.textContent = `Match found in ${fileName} - Page ${pageNum}`; /*displays filename and pagenumber where search string is found*/
+            container.appendChild(title);
+            container.appendChild(canvas);
+        }
+    </script>
+</body>
+<footer>&#169; Dataminds Inc.</footer>
+</html>
